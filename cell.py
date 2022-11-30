@@ -1,10 +1,11 @@
-from tkinter import Button
+from tkinter import Button, Label
 import random
 import settings
 
 
 class Cell:
     all = []
+    cell_count_label_object = None
     def __init__(self,x, y, is_mine=False):
         self.is_mine = is_mine
         self.cell_btn_object = None
@@ -18,15 +19,30 @@ class Cell:
             location,
             width=12,
             height=4,
-            text=f"{self.x},{self.y}"
         )
         btn.bind('<Button-1>', self.left_click_actions ) #left click
         btn.bind('<Button-3>', self.right_click_actions) #right click
         self.cell_btn_object = btn
+
+    @staticmethod
+    def create_cell_count_label(location):
+        lbl = Label(
+            location,
+            bg='black',
+            fg='white',
+            text=f"Cells left:{settings.CELL_COUNT}",
+            width=12,
+            height=4,
+            font=("",30)
+        )
+        Cell.cell_count_label_object = lbl
     def left_click_actions(self, event):
         if self.is_mine:
             self.show_mine()
         else:
+            if self.surrounded_cells_mines_length == 0:
+                for cell_obj in self.surrounded_cells:
+                    cell_obj.show_cell()
             self.show_cell()
 
     def get_cell_by_axis(self, x,y):
@@ -35,9 +51,32 @@ class Cell:
             if cell.x == x and cell.y == y:
                 return cell
 
+    @property
+    def surrounded_cells(self):
+        cells = [
+            self.get_cell_by_axis(self.x - 1, self.y - 1),
+            self.get_cell_by_axis(self.x - 1, self.y),
+            self.get_cell_by_axis(self.x - 1, self.y + 1),
+            self.get_cell_by_axis(self.x, self.y - 1),
+            self.get_cell_by_axis(self.x + 1, self.y - 1),
+            self.get_cell_by_axis(self.x + 1, self.y),
+            self.get_cell_by_axis(self.x + 1, self.y + 1),
+            self.get_cell_by_axis(self.x, self.y + 1)
+        ]
 
+        cells = [cell for cell in cells if cell is not None]
+        return cells
+
+    @property
+    def surrounded_cells_mines_length(self):
+        counter = 0
+        for cell in self.surrounded_cells:
+            if cell.is_mine:
+                counter += 1
+
+        return counter
     def show_cell(self):
-        print(self.get_cell_by_axis(0,0))
+         self.cell_btn_object.configure(text=self.surrounded_cells_mines_length)
 
     def show_mine(self):
         # A logic to interrupt the game and display a message that player lost!
