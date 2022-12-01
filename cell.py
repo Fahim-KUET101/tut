@@ -5,9 +5,12 @@ import settings
 
 class Cell:
     all = []
+    cell_count = settings.CELL_COUNT
     cell_count_label_object = None
     def __init__(self,x, y, is_mine=False):
         self.is_mine = is_mine
+        self.is_opened = False
+        self.is_mine_candidate = False
         self.cell_btn_object = None
         self.x = x
         self.y = y
@@ -30,7 +33,7 @@ class Cell:
             location,
             bg='black',
             fg='white',
-            text=f"Cells left:{settings.CELL_COUNT}",
+            text=f"Cells left:{Cell.cell_count}",
             width=12,
             height=4,
             font=("",30)
@@ -76,14 +79,30 @@ class Cell:
 
         return counter
     def show_cell(self):
-         self.cell_btn_object.configure(text=self.surrounded_cells_mines_length)
-
+        if not self.is_opened:
+            Cell.cell_count -= 1
+            self.cell_btn_object.configure(text=self.surrounded_cells_mines_length)
+            # replace the text of cell count lebel with the newer count
+            if Cell.cell_count_label_object:
+                Cell.cell_count_label_object.configure(
+                    text=f"Cells left:{Cell.cell_count}"
+                )
+        # mark the cell is opened (Use in as the last line of this method)
+        self.is_opened = True
     def show_mine(self):
         # A logic to interrupt the game and display a message that player lost!
         self.cell_btn_object.configure(bg='red')
     def right_click_actions(self, event):
-        print(event)
-        print("I am right clicked!!")
+        if not self.is_mine_candidate:
+            self.cell_btn_object.configure(
+                bg='orange'
+            )
+            self.is_mine_candidate = True
+        else:
+            self.cell_btn_object.configure(
+                bg='SystemButtonFace'
+            )
+            self.is_mine_candidate = False
     @staticmethod
     def randomize_mines():
         picked_cells = random.sample(
